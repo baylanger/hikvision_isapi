@@ -13,12 +13,44 @@ from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .capabilities import EntityDescriptor, EntityType, parse_capabilities, _build_value_map, _strip_ns
-from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
+from .const import (
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    NAME_COMPONENT_DEVICE_NAME,
+    NAME_COMPONENT_HOST,
+    NAME_COMPONENT_MODEL,
+)
 from .isapi_client import DeviceInfo, ISAPIClient
 
 import re
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def build_device_name(
+    device_info: DeviceInfo, host: str, components: list[str]
+) -> str:
+    """Build the device name from the user's selected naming components.
+
+    Order is always Device Name, then Host, then Model, regardless of the
+    order components were selected in - so the result is predictable no
+    matter how the config flow's multi-select happens to return the list
+    (relying on UI click-order here would be fragile: it isn't a
+    documented behavior of the selector widget and could change silently
+    between Home Assistant versions).
+    Shared between the config flow (to preview the result before the entry
+    is created) and the coordinator (to actually set it).
+    """
+    parts: list[str] = []
+    if NAME_COMPONENT_DEVICE_NAME in components and device_info.device_name:
+        parts.append(device_info.device_name)
+    if NAME_COMPONENT_HOST in components:
+        parts.append(host)
+    if NAME_COMPONENT_MODEL in components:
+        parts.append(device_info.model)
+    # Should be unreachable (the config flow requires at least one
+    # component), but never return a blank device name.
+    return " ".join(parts) if parts else device_info.model
 
 _PLATFORM_KEY = {
     EntityType.SWITCH: "switch",
@@ -130,6 +162,7 @@ class HikvisionISAPICoordinator(DataUpdateCoordinator):
         hass: HomeAssistant,
         client: ISAPIClient,
         device_info: DeviceInfo,
+        name_components: list[str],
     ) -> None:
         super().__init__(
             hass,
@@ -139,6 +172,13 @@ class HikvisionISAPICoordinator(DataUpdateCoordinator):
         )
         self.client = client
         self.device_info = device_info
+        self.name_components = name_components
+        # Computed once at setup, not per-property-access - the pieces that
+        # feed it (device_info, client.host, name_components) don't change
+        # for the lifetime of this coordinator.
+        self.ha_device_name = build_device_name(
+            device_info, client.host, name_components
+        )
         self.entity_descriptors: List[EntityDescriptor] = []
         self._capabilities_fetched = False
 

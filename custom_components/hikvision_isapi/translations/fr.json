@@ -7,7 +7,11 @@
         "data": {
           "host": "Hôte",
           "username": "Nom d'utilisateur",
-          "password": "Mot de passe"
+          "password": "Mot de passe",
+          "entity_name_components": "Comment les nouvelles entités doivent-elles être nommées ?"
+        },
+        "data_description": {
+          "host": "Nom d'hôte (FQDN) ou adresse IP de la caméra, par ex. 192.168.1.64 ou cam-office.example.com"
         }
       },
       "reconfigure": {
@@ -18,6 +22,10 @@
           "username": "Nom d'utilisateur",
           "password": "Mot de passe"
         }
+      },
+      "confirm": {
+        "title": "Confirmer le nommage des entités",
+        "description": "D'après votre sélection, le nom de l'appareil pour cette caméra sera **{device_name}**.\n\nPar exemple, son entité Mode BLC sera :\n`{example_entity_id}`\n\nCela n'affecte que les entités créées à partir de maintenant — cela ne renommera rien de ce qui existe déjà. Revenez en arrière pour modifier votre sélection, ou continuez pour terminer l'ajout de cette caméra."
       }
     },
     "error": {
@@ -406,7 +414,16 @@
   "issues": {
     "translation_gaps": {
       "title": "Traductions manquantes pour {count} paramètre(s) sur le modèle de caméra {model}",
-      "description": "Modèle de caméra : {model} (firmware {firmware})\n\nVotre caméra a signalé des paramètres pour lesquels cette intégration n'a pas encore de traductions. Ils fonctionnent normalement \u2014 ils affichent simplement un nom générique ou leur valeur brute de la caméra en attendant que ce soit corrigé.\n\n```\n{gaps}\n```\n\nVeuillez [ouvrir un ticket]({github_url}) avec cette liste afin que des noms et traductions appropriés puissent être ajoutés pour votre modèle de caméra."
+      "description": "Modèle de caméra : {model} (firmware {firmware})\n\nVotre caméra a signalé des paramètres pour lesquels cette intégration n'a pas encore de traductions. Ils fonctionnent normalement — ils affichent simplement un nom générique ou leur valeur brute de la caméra en attendant que ce soit corrigé.\n\n```\n{gaps}\n```\n\nVeuillez [ouvrir un ticket]({github_url}) avec cette liste afin que des noms et traductions appropriés puissent être ajoutés pour votre modèle de caméra."
+    }
+  },
+  "selector": {
+    "entity_name_components": {
+      "options": {
+        "device_name": "Nom de l'appareil (configuré dans les paramètres de la caméra)",
+        "model": "Modèle de la caméra",
+        "host": "Hôte (nom d'hôte ou adresse IP saisi ci-dessus)"
+      }
     }
   }
 }

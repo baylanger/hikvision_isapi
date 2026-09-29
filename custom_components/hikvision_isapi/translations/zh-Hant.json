@@ -7,7 +7,11 @@
         "data": {
           "host": "主機",
           "username": "用戶名稱",
-          "password": "密碼"
+          "password": "密碼",
+          "entity_name_components": "新實體應如何命名？"
+        },
+        "data_description": {
+          "host": "攝錄機的主機名稱（FQDN）或 IP 位址，例如 192.168.1.64 或 cam-office.example.com"
         }
       },
       "reconfigure": {
@@ -18,6 +22,10 @@
           "username": "用戶名稱",
           "password": "密碼"
         }
+      },
+      "confirm": {
+        "title": "確認實體命名",
+        "description": "根據你的選擇，此攝錄機的裝置名稱將為 **{device_name}**。\n\n例如，其 BLC 模式實體將為：\n`{example_entity_id}`\n\n這僅影響此後新建立的實體——不會重新命名任何已存在的實體。返回可修改你的選擇，或繼續以完成新增此攝錄機。"
       }
     },
     "error": {
@@ -406,7 +414,16 @@
   "issues": {
     "translation_gaps": {
       "title": "攝錄機型號 {model} 有 {count} 項設定缺少翻譯",
-      "description": "攝錄機型號：{model}（韌體版本 {firmware}）\n\n你的攝錄機回報了一些此整合套件尚未提供翻譯的設定。它們仍可正常運作\u2014\u2014在修正之前，只會顯示通用名稱或攝錄機的原始數值。\n\n```\n{gaps}\n```\n\n請[提交一個 issue]({github_url})並附上此清單，以便為你的攝錄機型號加入正確的名稱與翻譯。"
+      "description": "攝錄機型號：{model}（韌體版本 {firmware}）\n\n你的攝錄機回報了一些此整合套件尚未提供翻譯的設定。它們仍可正常運作——在修正之前，只會顯示通用名稱或攝錄機的原始數值。\n\n```\n{gaps}\n```\n\n請[提交一個 issue]({github_url})並附上此清單，以便為你的攝錄機型號加入正確的名稱與翻譯。"
+    }
+  },
+  "selector": {
+    "entity_name_components": {
+      "options": {
+        "device_name": "裝置名稱（在攝錄機自身設定中設定）",
+        "model": "攝錄機型號",
+        "host": "主機（你在上方輸入的主機名稱或 IP）"
+      }
     }
   }
 }

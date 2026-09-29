@@ -7,7 +7,11 @@
         "data": {
           "host": "Host",
           "username": "Username",
-          "password": "Password"
+          "password": "Password",
+          "entity_name_components": "How should new entities be named?"
+        },
+        "data_description": {
+          "host": "Hostname (FQDN) or IP address of the camera, e.g. 192.168.1.64 or cam-office.example.com"
         }
       },
       "reconfigure": {
@@ -18,6 +22,10 @@
           "username": "Username",
           "password": "Password"
         }
+      },
+      "confirm": {
+        "title": "Confirm entity naming",
+        "description": "Based on your selection, this camera's device name will be **{device_name}**.\n\nFor example, its BLC Mode entity will be:\n`{example_entity_id}`\n\nThis only affects entities created from now on - it won't rename anything that already exists. Go back to change your selection, or continue to finish adding this camera."
       }
     },
     "error": {
@@ -355,13 +363,13 @@
       "dss_dsslevel": {
         "name": "Digital Slow Shutter Level",
         "state": {
-          "*1.25": "\u00d71.25",
-          "*1.5": "\u00d71.5",
-          "*2": "\u00d72",
-          "*3": "\u00d73",
-          "*4": "\u00d74",
-          "*6": "\u00d76",
-          "*8": "\u00d78",
+          "*1.25": "×1.25",
+          "*1.5": "×1.5",
+          "*2": "×2",
+          "*3": "×3",
+          "*4": "×4",
+          "*6": "×6",
+          "*8": "×8",
           "auto": "Auto"
         }
       },
