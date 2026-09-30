@@ -7,7 +7,11 @@
         "data": {
           "host": "主机",
           "username": "用户名",
-          "password": "密码"
+          "password": "密码",
+          "entity_name_components": "新实体应如何命名？"
+        },
+        "data_description": {
+          "host": "摄像机的主机名（FQDN）或 IP 地址，例如 192.168.1.64 或 cam-office.example.com"
         }
       },
       "reconfigure": {
@@ -18,12 +22,21 @@
           "username": "用户名",
           "password": "密码"
         }
+      },
+      "confirm": {
+        "description": "根据您的选择，此摄像机的设备名称将为 **{device_name}**。\n\n例如，其 BLC 模式实体将为：\n`{example_entity_id}`\n\n这仅影响此后新创建的实体——不会重命名任何已存在的实体。",
+        "menu_options": {
+          "finish": "继续",
+          "user": "修改命名选择"
+        },
+        "title": "确认实体命名"
       }
     },
     "error": {
       "cannot_connect": "连接摄像机失败。请检查 IP 地址并确保摄像机可达。",
       "invalid_auth": "凭据无效。请检查用户名和密码。",
-      "unknown": "发生未知错误。"
+      "unknown": "发生未知错误。",
+      "select_at_least_one": "请至少选择一项。"
     },
     "abort": {
       "already_configured": "该摄像机已配置。",
@@ -406,7 +419,16 @@
   "issues": {
     "translation_gaps": {
       "title": "摄像机型号 {model} 有 {count} 项设置缺少翻译",
-      "description": "摄像机型号：{model}（固件版本 {firmware}）\n\n您的摄像机报告了一些此集成尚无翻译的设置。它们仍可正常使用\u2014\u2014在修复之前，只是显示通用名称或摄像机的原始值。\n\n```\n{gaps}\n```\n\n请[提交一个 issue]({github_url})并附上此列表，以便为您的摄像机型号添加正确的名称和翻译。"
+      "description": "摄像机型号：{model}（固件版本 {firmware}）\n\n您的摄像机报告了一些此集成尚无翻译的设置。它们仍可正常使用——在修复之前，只是显示通用名称或摄像机的原始值。\n\n```\n{gaps}\n```\n\n请[提交一个 issue]({github_url})并附上此列表，以便为您的摄像机型号添加正确的名称和翻译。"
+    }
+  },
+  "selector": {
+    "entity_name_components": {
+      "options": {
+        "device_name": "设备名称（在摄像机自身设置中配置）",
+        "model": "摄像机型号",
+        "host": "主机（您在上方输入的主机名或 IP）"
+      }
     }
   }
 }

@@ -8,7 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN, PLATFORMS
+from .const import CONF_NAME_COMPONENTS, DEFAULT_NAME_COMPONENTS, DOMAIN, PLATFORMS
 from .coordinator import HikvisionISAPICoordinator
 from .isapi_client import ISAPIClient
 
@@ -26,7 +26,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Validate connection and get device info
     device_info = await client.get_device_info()
 
-    coordinator = HikvisionISAPICoordinator(hass, client, device_info)
+    # Entries created before this option existed won't have it in their
+    # data - default to the pre-existing behavior (model + host) so
+    # already-configured cameras are unaffected.
+    name_components = entry.data.get(CONF_NAME_COMPONENTS, DEFAULT_NAME_COMPONENTS)
+
+    coordinator = HikvisionISAPICoordinator(hass, client, device_info, name_components)
 
     # First refresh fetches capabilities + current values and builds entity descriptors
     await coordinator.async_config_entry_first_refresh()
