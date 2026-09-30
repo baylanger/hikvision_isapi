@@ -10,17 +10,52 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
+from homeassistant.helpers import selector
+from homeassistant.util import slugify
 
-from .const import DOMAIN
+from .const import (
+    CONF_NAME_COMPONENTS,
+    DEFAULT_NAME_COMPONENTS,
+    DOMAIN,
+    NAME_COMPONENT_DEVICE_NAME,
+    NAME_COMPONENT_HOST,
+    NAME_COMPONENT_MODEL,
+)
+from .coordinator import build_device_name
 from .isapi_client import DeviceInfo, ISAPIClient
 
 _LOGGER = logging.getLogger(__name__)
+
+
+# NOTE: this must be a bare selector, not wrapped in vol.All() with a
+# custom validator function. Home Assistant serializes the entire schema
+# to JSON to render the form in the frontend - it knows how to serialize
+# selectors, but has no way to serialize an arbitrary Python function,
+# which crashes with a 500 error the moment the form tries to load (not a
+# validation-time error - it never even gets that far). "At least one
+# selected" is enforced at runtime in async_step_user instead, the same
+# way credential errors already are in this file.
+_NAME_COMPONENTS_SELECTOR = selector.SelectSelector(
+    selector.SelectSelectorConfig(
+        options=[
+            NAME_COMPONENT_DEVICE_NAME,
+            NAME_COMPONENT_MODEL,
+            NAME_COMPONENT_HOST,
+        ],
+        multiple=True,
+        mode=selector.SelectSelectorMode.LIST,
+        translation_key=CONF_NAME_COMPONENTS,
+    )
+)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
         vol.Required(CONF_USERNAME, default="admin"): str,
         vol.Required(CONF_PASSWORD): str,
+        vol.Required(
+            CONF_NAME_COMPONENTS, default=DEFAULT_NAME_COMPONENTS
+        ): _NAME_COMPONENTS_SELECTOR,
     }
 )
 
@@ -55,13 +90,22 @@ class HikvisionISAPIConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: Optional[Dict[str, Any]] = None
     ) -> ConfigFlowResult:
-        """Handle the initial step: host + credentials."""
+        """Handle the initial step: host + credentials + naming preference."""
         errors: Dict[str, str] = {}
 
         if user_input is not None:
             host = user_input[CONF_HOST].strip()
             username = user_input[CONF_USERNAME].strip()
             password = user_input[CONF_PASSWORD]
+            name_components = user_input[CONF_NAME_COMPONENTS]
+
+            if not name_components:
+                errors[CONF_NAME_COMPONENTS] = "select_at_least_one"
+                return self.async_show_form(
+                    step_id="user",
+                    data_schema=STEP_USER_DATA_SCHEMA,
+                    errors=errors,
+                )
 
             device_info, errors = await _validate_credentials(
                 host, username, password
@@ -71,19 +115,72 @@ class HikvisionISAPIConfigFlow(ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id(device_info.unique_id)
                 self._abort_if_unique_id_configured()
 
-                return self.async_create_entry(
-                    title=f"{device_info.model} ({host})",
-                    data={
-                        CONF_HOST: host,
-                        CONF_USERNAME: username,
-                        CONF_PASSWORD: password,
-                    },
-                )
+                # Don't create the entry yet - show the user what the
+                # resulting device name and an example entity_id will
+                # actually look like, using this camera's real data,
+                # before committing.
+                self._pending_data = {
+                    CONF_HOST: host,
+                    CONF_USERNAME: username,
+                    CONF_PASSWORD: password,
+                    CONF_NAME_COMPONENTS: name_components,
+                }
+                self._pending_device_info = device_info
+                return await self.async_step_confirm()
+
+        # If we're back here because the user picked "change naming
+        # selection" from the confirm step's menu, re-show this form
+        # pre-filled with what they entered before, instead of blank.
+        schema = STEP_USER_DATA_SCHEMA
+        pending_data = getattr(self, "_pending_data", None)
+        if user_input is None and pending_data:
+            schema = self.add_suggested_values_to_schema(
+                STEP_USER_DATA_SCHEMA, pending_data
+            )
 
         return self.async_show_form(
             step_id="user",
-            data_schema=STEP_USER_DATA_SCHEMA,
+            data_schema=schema,
             errors=errors,
+        )
+
+    async def async_step_confirm(
+        self, user_input: Optional[Dict[str, Any]] = None
+    ) -> ConfigFlowResult:
+        """Show the actual computed device name and an example entity_id
+        for this camera, built from its real data, before creating the
+        entry. A menu (not a plain form) so the two choices - continue,
+        or go back and change the naming selection - are real, distinct
+        buttons rather than relying on Home Assistant's flow dialog
+        providing back-navigation on its own, which it does not do
+        automatically for a custom step like this.
+        """
+        device_info = self._pending_device_info
+        data = self._pending_data
+
+        preview_name = build_device_name(
+            device_info, data[CONF_HOST], data[CONF_NAME_COMPONENTS]
+        )
+        example_entity_id = f"select.{slugify(preview_name)}_blc_mode"
+
+        return self.async_show_menu(
+            step_id="confirm",
+            menu_options=["finish", "user"],
+            description_placeholders={
+                "device_name": preview_name,
+                "example_entity_id": example_entity_id,
+            },
+        )
+
+    async def async_step_finish(
+        self, user_input: Optional[Dict[str, Any]] = None
+    ) -> ConfigFlowResult:
+        """Create the entry using the data collected and confirmed earlier."""
+        device_info = self._pending_device_info
+        data = self._pending_data
+        return self.async_create_entry(
+            title=f"{device_info.model} ({data[CONF_HOST]})",
+            data=data,
         )
 
     async def async_step_reconfigure(
